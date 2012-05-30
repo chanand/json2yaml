@@ -1,101 +1,96 @@
-(function (self) { 
-  /*
-   * TODO, lots of concatenation (slow in js)
-   */
-  var spacing = "  ";
+(function (self) {
 
-  function getType(obj) {
-    var type = typeof obj;
-    if (obj instanceof Array) {
-      return 'array';
-    } else if (type == 'string') {
-      return 'string';
-    } else if (type == 'boolean') {
-      return 'boolean';
-    } else if (type == 'number') {
-      return 'number';
-    } else if (type == 'undefined' || obj === null) {
-      return 'null';
-    } else {
-      return 'hash';
-    }
-  }
+    var spacing = '  ',
+        converters = {
 
-  function convert(obj, ret) {
-    var type = getType(obj);
+            'array': function (obj, ret) {
+                for (var i = 0; i < obj.length; i++) {
+                    var ele = obj[i];
+                    var recurse = [];
+                    convert(ele, recurse);
 
-    switch(type) {
-      case 'array':
-        convertArray(obj, ret);
-        break;
-      case 'hash':
-        convertHash(obj, ret);
-        break;
-      case 'string':
-        convertString(obj, ret);
-        break;
-      case 'null':
-        ret.push('null');
-        break;
-      case 'number':
-        ret.push(obj.toString());
-        break;
-      case 'boolean':
-        ret.push(obj ? 'true' : 'false');
-        break;
-    }
-  }
+                    for (var j = 0; j < recurse.length; j++) {
+                        ret.push((j == 0 ? '- ' : spacing) + recurse[j]);
+                    }
+                }
+            },
 
-  function convertArray(obj, ret) {
-    for (var i=0; i<obj.length; i++) {
-      var ele     = obj[i];
-      var recurse = [];
-      convert(ele, recurse);
+            'hash': function (obj, ret) {
+                for (var k in obj) {
+                    var recurse = [];
+                    if (obj.hasOwnProperty(k)) {
+                        var ele = obj[k];
+                        convert(ele, recurse);
+                        var type = getType(ele);
+                        if (type == 'string' || type == 'null' || type == 'number' || type == 'boolean') {
+                            ret.push(normalizeString(k) + ': ' + recurse[0]);
+                        } else {
+                            ret.push(normalizeString(k) + ': ');
+                            for (var i = 0; i < recurse.length; i++) {
+                                ret.push(spacing + recurse[i]);
+                            }
+                        }
+                    }
+                }
+            },
 
-      for (var j=0; j<recurse.length; j++) {
-        ret.push((j == 0 ? "- " : spacing) + recurse[j]);
-      }
-    }
-  }
+            'string': function(obj, ret) {
+                ret.push(normalizeString(obj));
+            },
 
-  function convertHash(obj, ret) {
-    for (var k in obj) {
-      var recurse = [];
-      if (obj.hasOwnProperty(k)) {
-        var ele = obj[k];
-        convert(ele, recurse);
-        var type = getType(ele);
-        if (type == 'string' || type == 'null' || type == 'number' || type == 'boolean') {
-          ret.push(normalizeString(k) + ': ' +  recurse[0]);
-        } else {
-          ret.push(normalizeString(k) + ': ');
-          for (var i=0; i<recurse.length; i++) {
-            ret.push(spacing + recurse[i]);
-          }
+            'null': function(obj,ret){
+                ret.push('null')
+            },
+
+            'number': function(obj,ret){
+                ret.push(obj.toString())
+            },
+
+            'boolean': function(obj,ret){
+                ret.push(obj ? 'true' : 'false');
+            }
+        };
+
+    function getType(obj) {
+        var type = typeof obj;
+
+        if (obj instanceof Array) {
+            return 'array';
         }
-      }
-    }
-  }
 
-  function normalizeString(str) {
-    if (str.match(/^[\w]+$/)) {
-      return str;
-    } else {
-      return JSON.stringify(str);
-    }
-  }
+        if (type == 'undefined' || obj === null) {
+            return 'null';
+        }
 
-  function convertString(obj, ret) {
-    ret.push(normalizeString(obj));
-  }
-  
-  self.json2yaml = function(obj) {
-    if (typeof obj == 'string') {
-      obj = JSON.parse(obj);
+        switch (type) {
+            case 'string':
+            case 'boolean':
+            case 'number':
+                return type;
+            default:
+                return 'hash';
+        }
     }
 
-    var ret = [];
-    convert(obj, ret);
-    return ret.join("\n");
-  };
+    function convert(obj, ret) {
+        converters[getType(obj)](obj, ret);
+    }
+
+    function normalizeString(str) {
+        if (str.match(/^[\w]+$/)) {
+            return str;
+        } else {
+            return JSON.stringify(str);
+        }
+    }
+
+    self.json2yaml = function (obj) {
+        if (typeof obj == 'string') {
+            obj = JSON.parse(obj);
+        }
+
+        var ret = [];
+        convert(obj, ret);
+        return ret.join('\n');
+    };
 })(this);
