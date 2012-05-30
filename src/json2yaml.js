@@ -4,29 +4,42 @@
         converters = {
 
             'array': function (obj, ret) {
-                for (var i = 0; i < obj.length; i++) {
-                    var ele = obj[i];
-                    var recurse = [];
+                var i = 0,
+                    ele,
+                    recurse;
+
+                for (; i < obj.length; i++) {
+                    ele = obj[i];
+                    recurse = [];
+
                     convert(ele, recurse);
 
                     for (var j = 0; j < recurse.length; j++) {
-                        ret.push((j == 0 ? '- ' : spacing) + recurse[j]);
+                        ret.push((j === 0 ? '- ' : spacing) + recurse[j]);
                     }
                 }
             },
 
             'hash': function (obj, ret) {
-                for (var k in obj) {
-                    var recurse = [];
+                var k,
+                    i,
+                    recurse,
+                    ele,
+                    type;
+
+                for (k in obj) {
+                    recurse = [];
+
                     if (obj.hasOwnProperty(k)) {
-                        var ele = obj[k];
+                        ele = obj[k];
                         convert(ele, recurse);
-                        var type = getType(ele);
-                        if (type == 'string' || type == 'null' || type == 'number' || type == 'boolean') {
+                        type = getType(ele);
+
+                        if (type === 'string' || type === 'null' || type === 'number' || type === 'boolean') {
                             ret.push(normalizeString(k) + ': ' + recurse[0]);
                         } else {
                             ret.push(normalizeString(k) + ': ');
-                            for (var i = 0; i < recurse.length; i++) {
+                            for (i = 0; i < recurse.length; i++) {
                                 ret.push(spacing + recurse[i]);
                             }
                         }
@@ -47,7 +60,7 @@
             },
 
             'boolean': function(obj,ret){
-                ret.push(obj ? 'true' : 'false');
+                ret.push(obj ? 'Yes' : 'No');
             }
         };
 
@@ -58,7 +71,7 @@
             return 'array';
         }
 
-        if (type == 'undefined' || obj === null) {
+        if (type === 'undefined' || obj === null) {
             return 'null';
         }
 
@@ -85,7 +98,7 @@
     }
 
     self.json2yaml = function (obj) {
-        if (typeof obj == 'string') {
+        if (typeof obj === 'string') {
             obj = JSON.parse(obj);
         }
 
